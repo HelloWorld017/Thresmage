@@ -86,6 +86,8 @@
 			statusView.innerHTML = '결과: ' + ((maxX - middle) / (maxX - minX) * 100) + '%';
 			ctx.fillStyle = "#555";
 			ctx.fillRect(middle, 0, 1, canvas.height);
+			ctx.fillRect(minX, 0, 1, canvas.height);
+			ctx.fillRect(maxX, 0, 1, canvas.height);
 		}
 		
 		/*var avg;

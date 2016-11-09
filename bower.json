@@ -20,6 +20,7 @@
   ],
   "dependencies": {
     "NanumBarunGothic": "^1.0.0",
-    "semantic": "semantic-ui#^2.2.6"
+    "semantic": "semantic-ui#^2.2.6",
+    "mdi": "^1.7.22"
   }
 }
