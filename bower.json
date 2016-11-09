@@ -1,0 +1,25 @@
+{
+  "name": "thresmage",
+  "authors": [
+    "HelloWorld017 <deu07115@gmail.com>"
+  ],
+  "description": "An application to get ratio of red blood cell",
+  "main": "index.html",
+  "keywords": [
+    "image"
+  ],
+  "license": "GPL-3",
+  "homepage": "",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "NanumBarunGothic": "^1.0.0",
+    "semantic": "semantic-ui#^2.2.6"
+  }
+}
