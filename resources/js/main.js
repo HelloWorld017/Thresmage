@@ -1,4 +1,4 @@
-(function(){
+//(function(){
 	var $ = function(query){
 		return document.querySelector(query);
 	};
@@ -12,6 +12,22 @@
 	var isLoading = false;
 	var imageData = undefined;
 	var data = undefined;
+	var manuloc = jQuery('#manuloc');
+
+	var autoThreshold = function(){
+		if(!imageData) return currThreshold;
+		var data = imageData.data;
+		var newThres = [currThreshold, 999];
+
+		for(var i = 0; i < 100; i++){
+			var len = Math.abs(calculateEdge(i / 100).edge.length - 4);
+			if(newThres[1] > len){
+				newThres = [i, len];
+			}
+		}
+
+		return newThres[0];
+	};
 
 	var threshold = function(v){
 		//var middlePoint = currThreshold * 3 / 25 - 3;
@@ -41,26 +57,26 @@
 
 			data[i] = threshold(data[i]);
 		}
-		
+		currThreshold = autoThreshold();
+
 		calculate();
 		isLoading = false;
 	};
 
-	var calculate = function(){
+	var brightness = function(i){
+		return (0.2126 * imageData.data[i] + 0.7152 * imageData.data[i + 1] + 0.0722 * imageData.data[i + 2]) / 255;
+	};
+
+	var calculateEdge = function(thres, context){
 		if(imageData === undefined) return;
-		ctx.putImageData(imageData, 0, 0);
 		var data = imageData.data;
 		var minX = undefined;
 		var maxX = undefined;
-		var thres = (currThreshold / 100);
 		var edge = [];
 
 		for(var i = 0; i < data.length; i += 4){
 			var x = (i / 4) % imageData.width;
 			var y = Math.floor((i / 4) / imageData.width);
-			var brightness = function(i){
-				return (0.2126 * data[i] + 0.7152 * data[i + 1] + 0.0722 * data[i + 2]) / 255;
-			};
 
 			if(data[i + 3] !== 0){
 				if(minX === undefined || minX > x) minX = x;
@@ -68,12 +84,33 @@
 
 				if(brightness(i) > thres && brightness(i + 4) < thres && data[i + 7] !== 0){
 					edge.push(x);
-					ctx.fillStyle = '#00f';
-					ctx.fillRect(x, y, 1, 1);
+					if(context){
+						context.fillStyle = '#00f';
+						context.fillRect(x, y, 1, 1);
+					}
 				}
 			}
 		}
-		
+
+		return {
+			minX: minX,
+			maxX: maxX,
+			edge: edge,
+			middle: edge[Math.floor(edge.length / 2)]
+		};
+	};
+
+	var calculate = function(){
+		if(imageData === undefined) return;
+		ctx.putImageData(imageData, 0, 0);
+		var output = calculateEdge(currThreshold / 100, ctx);
+		var minX = output.minX;
+		var maxX = output.maxX;
+		var edge = output.edge;
+		var middle = output.middle;
+
+		manuloc.range('set value', middle / canvas.width * 100);
+
 		if(edge.length > 2){
 			edge.pop();
 			edge.unshift();
@@ -82,14 +119,13 @@
 		if(edge.length === 0){
 			statusView.innerHTML = '실패: 위치 값 설정 잘못됨';
 		}else{
-			var middle = edge[Math.floor(edge.length / 2)];
 			statusView.innerHTML = '결과: ' + ((maxX - middle) / (maxX - minX) * 100) + '%';
 			ctx.fillStyle = "#555";
 			ctx.fillRect(middle, 0, 1, canvas.height);
 			ctx.fillRect(minX, 0, 1, canvas.height);
 			ctx.fillRect(maxX, 0, 1, canvas.height);
 		}
-		
+
 		/*var avg;
 		if(edge.length === 0){
 			statusView.innerHTML = 'Failed';
@@ -104,8 +140,8 @@
 	jQuery('.ui.accordion').accordion({
 		exclusive: false
 	});
-	
-	jQuery('.ui.range').range({
+
+	jQuery('#threshold').range({
 		min: 0,
 		max: 100,
 		start: 10,
@@ -118,6 +154,32 @@
 			if(img !== undefined){
 				currThreshold = event;
 				calculate();
+			}
+		}
+	});
+
+	manuloc.range({
+		min: 0,
+		max: 100,
+		start: 10,
+		step: 1,
+		onChange: function(event){
+			if(isLoading){
+				return;
+			}
+
+			if(imageData !== undefined){
+				ctx.putImageData(imageData, 0, 0);
+				var output = calculateEdge(currThreshold / 100, ctx);
+				var minX = output.minX;
+				var maxX = output.maxX;
+				var middle = event / 100 * canvas.width;
+				ctx.fillStyle = "#0f0";
+				ctx.fillRect(middle, 0, 1, canvas.height);
+				ctx.fillRect(minX, 0, 1, canvas.height);
+				ctx.fillRect(maxX, 0, 1, canvas.height);
+
+				statusView.innerHTML = '결과 (직접 조절됨): ' + ((maxX - middle) / (maxX - minX) * 100) + '%';
 			}
 		}
 	});
@@ -140,4 +202,4 @@
 		};
 		reader.readAsDataURL(file);
 	};
-})();
+//})();
